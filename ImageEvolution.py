@@ -28,6 +28,22 @@ def popToImage(x,y,population):
         Output: a PIL image object created by overlaying
         individuals triangles on top of each other and mixing the
         RGB color values."""
+    WIDTH = x
+    HEIGHT = y
+    img = Image.new('RGBA', (WIDTH, HEIGHT)) # Use RGBA
+    tri = Image.new('RGBA', (WIDTH, HEIGHT)) # Use RGBA
+    draw = ImageDraw.Draw(img)
+    draw_tri = ImageDraw.Draw(tri)
+
+    draw.polygon([(0, 0), (0, HEIGHT), (WIDTH, HEIGHT), (WIDTH, 0)], fill = (255,255,255,255)) #draws a white background
+
+    transparence = 100 # Define transparency for the triangle.
+    
+    for i in range(population):
+        draw_tri.polygon(randomTri(HEIGHT, WIDTH), fill = randomRBG(transparence))
+        img = Image.alpha_composite(img, tri)
+
+    return img
 
 def evaluation(population, img, imgAltered):
     """Input: the entire population, the original image, an altered image
@@ -53,9 +69,9 @@ saveImage(evolveImage())
 """
 JACK
 """
-def randomRBG():
+def randomRBG(trans):
     """returns a tuple with 3 random values"""
-    return (randint(0,255),randint(0,255),randint(0,255))
+    return (randint(0,255),randint(0,255),randint(0,255), trans)
 
 def randomTri(height,width):
     """
@@ -83,49 +99,4 @@ def randomTri(height,width):
     C[1] += y_offset
 
     return [tuple(A),tuple(B),tuple(C)]
-        
-
-def inTriangle(pt_coord,tri_coord):
-    """
-    pt_coord is a list(point) containing 2 coordinates
-    tri_coord is a list containing 3 lists(points)
-
-    returns True if point is in triangle, False otherwise
-    """
-    x,y = pt_coord[0], pt_coord[1]
-    A = [tri_coord[0][0], tri_coord[0][1]]
-    B = [tri_coord[1][0], tri_coord[1][1]]
-    C = [tri_coord[2][0], tri_coord[2][1]]
     
-    x_low = min(A[0], B[0],C[0])
-    x_hi = max(A[0], B[0],C[0])
-    if x not in range(x_low, x_hi):
-        return False
-    
-    y_low = min(A[1], B[1],C[1])
-    y_hi = max(A[1], B[1],C[1])
-    if y not in range(y_low, y_hi):
-        return False
-    
-    lines = []
-    if x in range(min(A[0],B[0]), max(A[0],B[0])):
-        lines.append([A,B])
-    if x in range(min(C[0],B[0]), max(C[0],B[0])):
-        lines.append([B,C])
-    if x in range(min(A[0],C[0]), max(A[0],C[0])):
-        lines.append([C,A])
-        
-    if y in range(findY(lines[0][0],lines[0][1],x), findY(lines[1][0],lines[1][1],x)):
-        return True
-    else:
-        return False
-
-
-def findY(A,B,x):
-    """
-    given a line formed by 2 points A and B
-    returns the value of y at x on that line
-    """
-    m = (B[1]-A[1]) / (B[0]-A[0])
-    b = A[1] - m*A[0]
-    return m*x + b
