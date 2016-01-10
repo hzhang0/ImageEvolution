@@ -40,6 +40,7 @@ def popToImage(x,y,population):
     transparence = 100 # Define transparency for the triangle.
     
     for i in range(population):
+        draw_tri.polygon([(0, 0), (0, HEIGHT), (WIDTH, HEIGHT), (WIDTH, 0)], fill = (255,255,255,0)) #resets triangle to white
         draw_tri.polygon(randomTri(HEIGHT, WIDTH), fill = randomRBG(transparence))
         img = Image.alpha_composite(img, tri)
 
