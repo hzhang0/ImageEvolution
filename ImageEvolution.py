@@ -27,23 +27,22 @@ def popToImage(x,y,population):
     """Input: x,y dimensions, the whole population
         Output: a PIL image object created by overlaying
         individuals triangles on top of each other and mixing the
-        RGB color values."""
-    WIDTH = x
-    HEIGHT = y
-    img = Image.new('RGBA', (WIDTH, HEIGHT)) # Use RGBA
-    tri = Image.new('RGBA', (WIDTH, HEIGHT)) # Use RGBA
+        RGB color values.
+        population is a list and has items in the form of [(x1,y1),(x2,y2),(x3,y3),(r,b,g,a)]"""
+    num_pop = len(population)
+    img = Image.new('RGBA', (x, y)) # Use RGBA
+    tri = Image.new('RGBA', (x, y)) # Use RGBA
+    #creates draw object for background and triangles
     draw = ImageDraw.Draw(img)
     draw_tri = ImageDraw.Draw(tri)
 
-    draw.polygon([(0, 0), (0, HEIGHT), (WIDTH, HEIGHT), (WIDTH, 0)], fill = (255,255,255,255)) #draws a white background
-
-    transparence = 100 # Define transparency for the triangle.
+    draw.polygon([(0, 0), (0, y), (x, y), (x, 0)], fill = (255,255,255,255)) #draws a white background
     
-    for i in range(population):
-        draw_tri.polygon([(0, 0), (0, HEIGHT), (WIDTH, HEIGHT), (WIDTH, 0)], fill = (255,255,255,0)) #resets triangle to white
-        draw_tri.polygon(randomTri(HEIGHT, WIDTH), fill = randomRBG(transparence))
+    for i in range(num_pop):
+        draw_tri.polygon([(0, 0), (0, y), (x, y), (x, 0)], fill = (255,255,255,0)) #update the triangle to a blank canvas
+        draw_tri.polygon([population[i][0],population[i][1],population[i][2]], fill = population[i][3])
         img = Image.alpha_composite(img, tri)
-
+        
     return img
 
 def evaluation(population, img, imgAltered):
