@@ -50,44 +50,41 @@ def evaluation(population, img, imgAltered):
         Output: a list of length len(population), composed of
         floats between 0 and 100, where 0 is the least fit,
         and 100 is the most fit.
-        population is a list and has items in the form of [(x1,y1),(x2,y2),(x3,y3),(r,g,b,a)]"""
+        population is a list and has items in the form of [(x1,y1),(x2,y2),(x3,y3),(r,g,b,a)]
+        returns a tuple, tuple[0] is the list of scores for each triangles, tuple[1] is the over score of the picture"""
 
     scores = [0]*len(population)
     accuracy = 85 #this is in % of how accurate the colours should be
     total = 0
+    steps = 4
     
     #creates pixel access objects
     pixel_alter = imgAltered.load()
     pixel_ori = img.load()
 
     #loops through each pixels to assign score 0 or 1 to that pixel
-    for i in range(1,width,4):
-        for j in range(1,height,4):
+    for i in range(1,width,steps):
+        for j in range(1,height,steps):
             pixo = pixel_ori[i,j]
             pixa = pixel_alter[i,j]
-            #print pixo, pixa
             #this is in percent how accurate this pixel is to the original
-            percent = (1 - (abs(pixo[0]-pixa[0])+abs(pixo[1]-pixa[1])+abs(pixo[2]-pixa[2]))/max(float(pixo[0]+pixo[1]+pixo[2]+1),float(pixa[0]+pixa[1]+pixa[2]+1)))*100
-            #print percent
+            percent = (1 - (abs(pixo[0]-pixa[0])+abs(pixo[1]-pixa[1])+abs(pixo[2]-pixa[2]))/765.0)*100
             
             total += percent
-            total /= 2.0
-            #print "total: ",total
             
             if percent >= accuracy:
                 #loops through the population to find triangles that has this pixel
                 for k in range(len(population)):
                     if inTriangle([i,j],population[k]):
                         scores[k] += 1
-        #print "total", total
         
     hi = max(scores)
     for i in range(len(scores)):
         scores[i] /= float(hi)
         scores[i] *= 100
         scores[i] = int(scores[i])
-    
-    print total
+
+    total /= (width/steps)*(height/steps)
     return scores, total
 
 def selection(population, fitness):
