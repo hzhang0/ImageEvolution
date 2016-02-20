@@ -6,6 +6,25 @@ inputPath= 'picture.jpg'
 outputPath = 'altered.png'
 threshold = 75
 
+'''
+General Program Flow
+1. initiate a population randomly, then cover up any whitespace
+2. mutate a random amount of population
+2.1 choose a member of population based on weight
+2.2 random select either one of three vertices or RGBA
+2.2.1 if a vertex is selected, shift x,y by up to +- 10% of width and height respectively
+2.2.1.2 if this exposes any whitespace, revert this shift
+2.2.1.3 if the area of the triangle is less than 1/500 of the canvas area, remove it
+2.2.2 if a color is selected, randomly generate a new RGBA
+3. Create new population (happens only at random generations)
+3.1 gets the triangle with the lowest score, splits it into two
+3.2 finds the first triangle that has area over 1/3 of the canvas (if it exists), split it into two
+4. Get the score, if it is greater than threshold, end program. Else go to 2.
+
+Notes:
+(255,255,255,n) is not used as RBG color since it's used to identify canvas
+'''
+
 def evolveImage():
     """Given an image, returns an altered version of the image"""
     img = readImage(inputPath)
@@ -15,10 +34,12 @@ def evolveImage():
     generation = 0
     while score < threshold:
         pop = mutation(width,height, pop, scores)
-        pop = crossover(pop, scores)
+        if (uniform(0.0, 1.0)>=0.5):
+            pop = crossover(width,height,pop, scores)
         scores, score = evaluation(width,height,pop, img, popToImage(width,height, pop))
         generation += 1
-        print generation, score
+        print generation, score, len(pop)
+        #shuffle(pop)
         saveImage(popToImage(width,height, pop), str(generation)+".png")
     return popToImage(width,height, pop)
         
@@ -56,7 +77,7 @@ def initializePopulation(x,y):
                 A = [randint(c1[0],c2[0]), randint(c2[1],c1[1])]
                 B = [randint(c2[0],c3[0]), randint(c2[1],c3[1])]
                 C = [i, randint(j+1, min((int)(j+size*y), (int)(y*(1+offset))))]
-                RGBA = [randint(0,255),randint(0,255),randint(0,255),randint(130,255)]
+                RGBA = randomRGBA()
                 pop.append([A,B,C,RGBA])
                 draw_tri.polygon([(0, 0), (0, y), (x, y), (x, 0)], fill = (255,255,255,0))
                 draw_tri.polygon([tuple(A),tuple(B),tuple(C)], fill=tuple(RGBA))
@@ -127,11 +148,19 @@ def evaluation(width,height,population, img, imgAltered):
     total /= (width/steps)*(height/steps)
     return scores, total
 
-def crossover(population, scores):
+def crossover(width,height,population, scores):
     """Input: the entire population
         Output: a population list with length longer than the input"""
-    newTri = []
     ch = population[scores.index(min(scores))]
+    population.append(splitTri(ch))
+    for i in population:
+        if area(i[0],i[1],i[2])>width*height/3:
+            population.append(splitTri(i))
+            break
+    return population
+
+def splitTri(ch):
+    newTri = []
     vertices = ch[0:3]
     shuffle(vertices)
     newPoint = midpoint(vertices[1], vertices[2])
@@ -140,26 +169,33 @@ def crossover(population, scores):
     newTri.append(newPoint)
     ch[0], ch[1], ch[2] = vertices[0], newPoint, vertices[2]
     newTri.append(ch[3])
-    population.append(newTri)
-    return population
-    
+    return newTri
     
 def mutation(width, height, population, scores):
     """Input: the entire population
         Output: a population list with some random properties of
         some of the individuals altered."""
     dist = 0.1
-    numMutations = randint(len(population)/3, len(population))
+    numMutations = randint(len(population)/2, len(population))
     weights = [100-i for i in scores]    
     for i in range(numMutations):
         index = weightedRandom(population,scores)
         ch = choice(population[index])
         if len(ch)==2:
-            ch[0] = ch[0] + (int)(uniform(-dist*width, dist*width))
-            ch[1] = ch[0] + (int)(uniform(-dist*height, dist*height))
+            ch[0] = ch[0] + (randint((int)(-dist*width), (int)(dist*width)))
+            ch[1] = ch[1] + (randint((int)(-dist*height), (int)(dist*height)))
+            
+            if area(population[index][0],population[index][1],population[index][2])<(width*height/500):
+                population.pop(index)
+                scores.pop(index)
+                weights.pop(index)
         elif len(ch)==3:
-            ch[0], ch[1], ch[2], ch[3] = randint(0,255),randint(0,255),randint(0,255),randint(130,255)
+            RGBA = randomRGBA()
+            ch[0], ch[1], ch[2], ch[3] = RGBA[0], RGBA[1], RGBA[2], RGBA[3], 
     return population
+
+def checkSpace():
+    None
 
 #utility functions
 def randomTri(width,height):
@@ -174,10 +210,16 @@ def randomTri(width,height):
     B =  [randint(c1[0],c2[0]), randint(c1[1],c2[1])]
     c3 = [min((int)(B[0]+size*width), (int)(width*(1+offset))), min((int)(B[1]+size*height), (int)(height*(1+offset)))]
     C = [randint(c1[0],c3[0]), randint(c1[1],c3[1])]
-    
-    RGBA = [randint(0,255),randint(0,255),randint(0,255),randint(130,255)]    
-    return [A,B,C,RGBA]
-    
+      
+    return [A,B,C,randomRGBA()]
+
+def randomRGBA():
+    RGBA = [randint(0,255),randint(0,255),randint(0,255),randint(130,255)]
+    if RGBA[0:3] == [255,255,255]:
+        return [255,255,254, RGBA[3]]
+    return RGBA
+
+
 def inTriangle(pt_coord,tri_coord):
     """
     pt_coord is a list(point) containing 2 coordinates
@@ -236,4 +278,12 @@ def weightedRandom(choices, weights):
 def midpoint(c1, c2):
     return [(c1[0]+c2[0])/2, (c1[1]+c2[1])/2]
 
+def area(c1,c2,c3):
+    return abs((c1[0]*(c2[1]-c3[1])+c2[0]*(c3[1]-c1[1])+c3[0]*(c1[1]-c2[1])/2.0))
+
 saveImage(evolveImage(), outputPath)
+
+#problems
+#zero division error in evaluation
+#does order of population matter?
+#how well score reflects order
