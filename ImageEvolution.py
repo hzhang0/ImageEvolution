@@ -1,6 +1,6 @@
 import os, sys
 from PIL import Image, ImageDraw
-from random import randint, uniform
+from random import randint, uniform, choice, shuffle
 
 inputPath= 'picture.jpg'
 outputPath = 'altered.png'
@@ -118,13 +118,36 @@ def evaluation(population, img, imgAltered):
 def crossover(population, scores):
     """Input: the entire population
         Output: a population list with length longer than the input"""
+    newTri = []
+    ch = population[scores.index(min(scores))]
+    vertices = ch[0:3]
+    shuffle(vertices)
+    newPoint = midpoint(vertices[1], vertices[2])
+    newTri.append(vertices[0])
+    newTri.append(vertices[1])
+    newTri.append(newPoint)
+    ch[0], ch[1], ch[2] = vertices[0], newPoint, vertices[2]
+    newTri.append(ch[3])
+    population.append(newTri)
+    return population
     
     
-def mutation(population, scores):
+def mutation(width, height, population, scores):
     """Input: the entire population
         Output: a population list with some random properties of
         some of the individuals altered."""
-    for i in 
+    dist = 0.1
+    numMutations = randint(len(population)/3, len(population))
+    weights = [100-i for i in scores]    
+    for i in range(numMutations):
+        index = weightedRandom(population,scores)
+        ch = choice(population[index])
+        if len(ch)==2:
+            ch[0] = ch[0] + (int)(uniform(-dist*width, dist*width))
+            ch[1] = ch[0] + (int)(uniform(-dist*height, dist*height))
+        elif len(ch)==3:
+            ch[0], ch[1], ch[2], ch[3] = randint(0,255),randint(0,255),randint(0,255),randint(130,255)
+    return population
 
 #utility functions
 def randomTri(width,height):
@@ -177,8 +200,7 @@ def inTriangle(pt_coord,tri_coord):
         return True
     else:
         return False
-
-
+    
 def findY(A,B,x):
     """
     given a line formed by 2 points A and B
@@ -196,7 +218,10 @@ def weightedRandom(choices, weights):
     upto = 0
     for i in range(len(choices)):
         if upto + weights[i] >= r:
-            return choices[i]
+            return i
         upto += weights[i]    
+
+def midpoint(c1, c2):
+    return [(c1[0]+c2[0])/2, (c1[1]+c2[1])/2]
 
 #saveImage(evolveImage())
