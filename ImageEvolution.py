@@ -119,11 +119,12 @@ def crossover(population, scores):
     """Input: the entire population
         Output: a population list with length longer than the input"""
     
+    
 def mutation(population, scores):
     """Input: the entire population
         Output: a population list with some random properties of
         some of the individuals altered."""
-    
+    for i in 
 
 #utility functions
 def randomTri(width,height):
@@ -188,5 +189,14 @@ def findY(A,B,x):
     m = (B[1]-A[1]) / (B[0]-A[0])
     b = A[1] - m*A[0]
     return m*x + b
+
+def weightedRandom(choices, weights):
+    total = sum(weights)
+    r = uniform(0, total)
+    upto = 0
+    for i in range(len(choices)):
+        if upto + weights[i] >= r:
+            return choices[i]
+        upto += weights[i]    
 
 #saveImage(evolveImage())
