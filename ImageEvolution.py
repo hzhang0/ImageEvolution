@@ -4,19 +4,31 @@ from random import randint, uniform, choice, shuffle
 
 inputPath= 'picture.jpg'
 outputPath = 'altered.png'
+threshold = 75
 
 def evolveImage():
     """Given an image, returns an altered version of the image"""
     img = readImage(inputPath)
-    width, height = img.size    
+    width, height = img.size
+    pop = initializePopulation(width,height)
+    scores, score = evaluation(width,height,pop, img, popToImage(width,height, pop))
+    generation = 0
+    while score < threshold:
+        pop = mutation(width,height, pop, scores)
+        pop = crossover(pop, scores)
+        scores, score = evaluation(width,height,pop, img, popToImage(width,height, pop))
+        generation += 1
+        print generation, score
+        saveImage(popToImage(width,height, pop), str(generation)+".png")
+    return popToImage(width,height, pop)
         
 def readImage(path):
     """Returns a PIL image object given a path."""
     return Image.open(path)
 
-def saveImage(img):
+def saveImage(img, path):
     """Given a PIL image, saves it to disk."""
-    img.save(outputPath)
+    img.save(path)
 
 def initializePopulation(x,y):
     """Input: x,y dimensions
@@ -73,7 +85,7 @@ def popToImage(x,y,population):
         
     return img
 
-def evaluation(population, img, imgAltered):
+def evaluation(width,height,population, img, imgAltered):
     """Input: the entire population, the original image, an altered image
         Output: a list of length len(population), composed of
         floats between 0 and 100, where 0 is the least fit,
@@ -224,4 +236,4 @@ def weightedRandom(choices, weights):
 def midpoint(c1, c2):
     return [(c1[0]+c2[0])/2, (c1[1]+c2[1])/2]
 
-#saveImage(evolveImage())
+saveImage(evolveImage(), outputPath)
