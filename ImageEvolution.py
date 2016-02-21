@@ -8,17 +8,17 @@ threshold = 75
 
 '''
 General Program Flow
-1. initiate a population randomly, then cover up any whitespace
+1. initiate a population randomly of sufficent area, then cover up any whitespace
 2. mutate a random amount of population
 2.1 choose a member of population based on weight
 2.2 random select either one of three vertices or RGBA
 2.2.1 if a vertex is selected, shift x,y by up to +- 10% of width and height respectively
 2.2.1.2 if this exposes any whitespace, revert this shift
-2.2.1.3 if the area of the triangle is less than 1/500 of the canvas area, remove it
+2.2.1.3 if the area of the triangle is less than 1/300 of the canvas area, remove it
 2.2.2 if a color is selected, randomly generate a new RGBA
 3. Create new population (happens only at random generations)
-3.1 gets the triangle with the lowest score, splits it into two
-3.2 finds the first triangle that has area over 1/3 of the canvas (if it exists), split it into two
+3.1 gets the triangle with the lowest score, splits it into two if it is large enough
+3.2 finds the first triangle that has area over 1/2 of the canvas (if it exists), split it into two
 4. Get the score, if it is greater than threshold, end program. Else go to 2.
 
 Notes:
@@ -59,9 +59,12 @@ def initializePopulation(x,y):
         The fourth list corresponds to a [R,G,B] color."""
     pop = []
     numPop = (int)((x*y)**(0.5))
-    #numPop = 10
-    for i in range(numPop):
-        pop.append(randomTri(x,y))
+    i=0
+    while i<numPop:
+        tri = randomTri(x,y)
+        if area(tri[0],tri[1],tri[2])>(x*y/300):
+            pop.append(randomTri(x,y))
+            i+=1
     curImg = popToImage(x,y,pop)
     size = 0.3
     offset= 0.3
@@ -77,7 +80,7 @@ def initializePopulation(x,y):
                 c3 = [min((int)(x*(1+offset)), (int)(i+size*x)), j]
                 A = [randint(c1[0],c2[0]), randint(c2[1],c1[1])]
                 B = [randint(c2[0],c3[0]), randint(c2[1],c3[1])]
-                C = [i, randint(j+1, min((int)(j+size*y), (int)(y*(1+offset))))]
+                C = [i, randint(j+5, min((int)(j+size*y), (int)(y*(1+offset))))]
                 RGBA = randomRGBA()
                 pop.append([A,B,C,RGBA])
                 draw_tri.polygon([(0, 0), (0, y), (x, y), (x, 0)], fill = (255,255,255,0))
@@ -153,10 +156,11 @@ def crossover(width,height,population, scores):
     """Input: the entire population
         Output: a population list with length longer than the input"""
     ch = population[scores.index(min(scores))]
-    population.append(splitTri(ch))
+    if area(ch[0],ch[1],ch[2]) > width*height/100:        
+        population.append(splitTri(ch))
     for i in population:
-        if area(i[0],i[1],i[2])>width*height/3:
-            population.append(splitTri(i))
+        if area(i[0],i[1],i[2])>width*height/2:
+            population.append(splitTri(i))            
             break
     return population
 
@@ -177,6 +181,7 @@ def mutation(width, height, population, scores):
         Output: a population list with some random properties of
         some of the individuals altered."""
     dist = 0.1
+    offset = 0.3
     numMutations = randint(len(population)/2, len(population))
     weights = [100-i for i in scores]    
     for i in range(numMutations):
@@ -184,9 +189,11 @@ def mutation(width, height, population, scores):
         ch = choice(population[index])
         if len(ch)==2:
             ch[0] = ch[0] + (randint((int)(-dist*width), (int)(dist*width)))
+            ch[0] = max((int)(-width*offset), min(ch[0], (int)(width*(offset+1))))
             ch[1] = ch[1] + (randint((int)(-dist*height), (int)(dist*height)))
+            ch[1] = max((int)(-height*offset), min(ch[1], (int)(height*(offset+1))))
             
-            if area(population[index][0],population[index][1],population[index][2])<(width*height/500):
+            if area(population[index][0],population[index][1],population[index][2])<(width*height/300):
                 population.pop(index)
                 scores.pop(index)
                 weights.pop(index)
@@ -255,7 +262,19 @@ def inTriangle(pt_coord,tri_coord):
         return True
     else:
         return False
-    
+
+def inTriangle2(pt, tri):
+    px,py = pt[0],pt[1]
+    p0x, p0y = tri[0][0], tri[0][1]
+    p1x, p1y = tri[1][0], tri[1][1]
+    p2x, p2y = tri[2][0], tri[2][1]
+    Area = 1/2.0*(-p1y*p2x + p0y*(-p1x + p2x) + p0x*(p1y - p2y) + p1x*p2y)
+    s = 1/(2.0*Area)*(p0y*p2x - p0x*p2y + (p2y - p0y)*px + (p0x - p2x)*py)
+    t = 1/(2.0*Area)*(p0x*p1y - p0y*p1x + (p0y - p1y)*px + (p1x - p0x)*py)
+    if 0<=s<=1 and 0<=t<=1 and s+t<=1:
+        return True
+    return False
+
 def findY(A,B,x):
     """
     given a line formed by 2 points A and B
