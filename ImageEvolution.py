@@ -1,4 +1,4 @@
-import os, sys
+import os, sys,copy
 from PIL import Image, ImageDraw
 from random import randint, uniform, choice, shuffle
 
@@ -59,6 +59,7 @@ def initializePopulation(x,y):
         The fourth list corresponds to a [R,G,B] color."""
     pop = []
     numPop = (int)((x*y)**(0.5))
+    #numPop = 10
     for i in range(numPop):
         pop.append(randomTri(x,y))
     curImg = popToImage(x,y,pop)
@@ -169,7 +170,7 @@ def splitTri(ch):
     newTri.append(newPoint)
     ch[0], ch[1], ch[2] = vertices[0], newPoint, vertices[2]
     newTri.append(ch[3])
-    return newTri
+    return copy.deepcopy(newTri)
     
 def mutation(width, height, population, scores):
     """Input: the entire population
@@ -284,6 +285,7 @@ def area(c1,c2,c3):
 saveImage(evolveImage(), outputPath)
 
 #problems
+#implement 2.2.1.2
 #zero division error in evaluation
 #does order of population matter?
 #how well score reflects order
