@@ -4,7 +4,7 @@ from random import randint, uniform, choice, shuffle
 
 inputPath= 'picture.jpg'
 outputPath = 'altered.png'
-threshold = 75
+threshold = 90
 
 '''
 General Program Flow
@@ -58,34 +58,35 @@ def initializePopulation(x,y):
         The first three lists are [x,y] coordinates.
         The fourth list corresponds to a [R,G,B] color."""
     pop = []
-    numPop = (int)((x*y)**(0.5))
+    #numPop = (int)((x*y)**(0.5))
+    numPop = 10
     i=0
     while i<numPop:
         tri = randomTri(x,y)
         if area(tri[0],tri[1],tri[2])>(x*y/300):
             pop.append(randomTri(x,y))
             i+=1
-    curImg = popToImage(x,y,pop)
-    size = 0.3
-    offset= 0.3
-    tri = Image.new('RGBA', (x, y)) 
-    draw = ImageDraw.Draw(curImg)
-    draw_tri = ImageDraw.Draw(tri)
-    for i in range(x):
-        for j in range(y):
-            pixel = curImg.getpixel((i,j))
-            if pixel == (255,255,255,255):
-                c1 = [max((int)(-offset*x), (int)(i-size*x)), j]
-                c2 = [i,max((int)(-offset*y), (int)(j-size*y))]
-                c3 = [min((int)(x*(1+offset)), (int)(i+size*x)), j]
-                A = [randint(c1[0],c2[0]), randint(c2[1],c1[1])]
-                B = [randint(c2[0],c3[0]), randint(c2[1],c3[1])]
-                C = [i, randint(j+5, min((int)(j+size*y), (int)(y*(1+offset))))]
-                RGBA = randomRGBA()
-                pop.append([A,B,C,RGBA])
-                draw_tri.polygon([(0, 0), (0, y), (x, y), (x, 0)], fill = (255,255,255,0))
-                draw_tri.polygon([tuple(A),tuple(B),tuple(C)], fill=tuple(RGBA))
-                curImg = Image.alpha_composite(curImg, tri)                
+##    curImg = popToImage(x,y,pop)
+##    size = 0.3
+##    offset= 0.3
+##    tri = Image.new('RGBA', (x, y)) 
+##    draw = ImageDraw.Draw(curImg)
+##    draw_tri = ImageDraw.Draw(tri)
+##    for i in range(x):
+##        for j in range(y):
+##            pixel = curImg.getpixel((i,j))
+##            if pixel == (255,255,255,255):
+##                c1 = [max((int)(-offset*x), (int)(i-size*x)), j]
+##                c2 = [i,max((int)(-offset*y), (int)(j-size*y))]
+##                c3 = [min((int)(x*(1+offset)), (int)(i+size*x)), j]
+##                A = [randint(c1[0],c2[0]), randint(c2[1],c1[1])]
+##                B = [randint(c2[0],c3[0]), randint(c2[1],c3[1])]
+##                C = [i, randint(j+5, min((int)(j+size*y), (int)(y*(1+offset))))]
+##                RGBA = randomRGBA()
+##                pop.append([A,B,C,RGBA])
+##                draw_tri.polygon([(0, 0), (0, y), (x, y), (x, 0)], fill = (255,255,255,0))
+##                draw_tri.polygon([tuple(A),tuple(B),tuple(C)], fill=tuple(RGBA))
+##                curImg = Image.alpha_composite(curImg, tri)                
     return pop
 
 def popToImage(x,y,population):
