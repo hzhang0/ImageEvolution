@@ -144,6 +144,8 @@ def evaluation(width,height,population, img, imgAltered):
                         scores[k] += 1
         
     hi = max(scores)
+    if hi == 0:
+        hi = 100
     for i in range(len(scores)):
         scores[i] /= float(hi)
         scores[i] *= 100
